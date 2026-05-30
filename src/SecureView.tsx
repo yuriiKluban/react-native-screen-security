@@ -12,24 +12,22 @@ const styles = StyleSheet.create({
   stretch: { flex: 1 },
 });
 
-export const SecureView = React.forwardRef<View, SecureViewProps>(
-  ({ children, style, ...props }, ref) => {
-    const mergedStyle = [styles.stretch, style];
+export const SecureView = React.forwardRef<View, SecureViewProps>(({ children, style, ...props }, ref) => {
+  const mergedStyle = [styles.stretch, style];
 
-    if (Platform.OS === 'android') {
-      return (
-        <SecureWindowAnchorNative ref={ref} style={mergedStyle} collapsable={false} {...props}>
-          {children}
-        </SecureWindowAnchorNative>
-      );
-    }
-
+  if (Platform.OS === 'android') {
     return (
-      <SecureViewNativeComponent ref={ref} style={mergedStyle} collapsable={false} {...props}>
+      <SecureWindowAnchorNative ref={ref} style={mergedStyle} collapsable={false} {...props}>
         {children}
-      </SecureViewNativeComponent>
+      </SecureWindowAnchorNative>
     );
-  },
-);
+  }
+
+  return (
+    <SecureViewNativeComponent ref={ref} style={mergedStyle} collapsable={false} {...props}>
+      {children}
+    </SecureViewNativeComponent>
+  );
+});
 
 SecureView.displayName = 'SecureView';

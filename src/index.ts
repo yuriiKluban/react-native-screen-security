@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { type EmitterSubscription, NativeEventEmitter, Platform } from 'react-native';
 
 import NativeScreenSecurity from './NativeScreenSecurity';
@@ -100,7 +100,10 @@ export function useScreenSecurity(options: ScreenSecurityOptions = {}): void {
 
 export function useScreenshotDetection(callback: () => void): void {
   const callbackRef = useRef(callback);
-  callbackRef.current = callback;
+
+  useLayoutEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
 
   useEffect(() => {
     const subscription = onScreenshotTaken(() => callbackRef.current());
@@ -110,12 +113,13 @@ export function useScreenshotDetection(callback: () => void): void {
 
 export function useScreenRecordingDetection(callback: (isCaptured: boolean) => void): void {
   const callbackRef = useRef(callback);
-  callbackRef.current = callback;
+
+  useLayoutEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
 
   useEffect(() => {
-    const subscription = onScreenRecordingStatusChanged(event =>
-      callbackRef.current(event.isCaptured),
-    );
+    const subscription = onScreenRecordingStatusChanged(event => callbackRef.current(event.isCaptured));
     return () => subscription.remove();
   }, []);
 }

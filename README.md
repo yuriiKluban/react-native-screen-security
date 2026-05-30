@@ -1,5 +1,6 @@
 [![npm version](https://img.shields.io/npm/v/react-native-screen-security.svg)](https://www.npmjs.com/)
 [![license](https://img.shields.io/npm/l/react-native-screen-security.svg)](https://github.com/yuriikluban/react-native-screen-security/blob/main/LICENSE)
+
 # react-native-screen-security
 
 Native screen security for React Native **New Architecture** (TurboModules). Block screen capture, protect sensitive content in the app switcher, and detect screenshots — with zero Bridge overhead.
@@ -37,12 +38,12 @@ Native screen security for React Native **New Architecture** (TurboModules). Blo
 
 ## Requirements
 
-| | Version |
-|---|---|
-| React Native | `>= 0.79` (New Architecture required) |
-| iOS | `>= 13.4` |
-| Android | `minSdk 24`, `compileSdk 34+` recommended |
-| React | `>= 18` |
+|              | Version                                   |
+| ------------ | ----------------------------------------- |
+| React Native | `>= 0.79` (New Architecture required)     |
+| iOS          | `>= 13.4`                                 |
+| Android      | `minSdk 24`, `compileSdk 34+` recommended |
+| React        | `>= 18`                                   |
 
 > **Android tab navigation:** component-level protection requires `<SecureView>` (or native fragment host via react-native-screens). The hook alone enables iOS app-switcher blur but does not apply `FLAG_SECURE` on Android in `component` mode.
 
@@ -146,10 +147,7 @@ React to screenshot attempts — show a warning, log analytics, invalidate a ses
 ```tsx
 import React from 'react';
 import { Alert } from 'react-native';
-import {
-  useScreenSecurity,
-  useScreenshotDetection,
-} from 'react-native-screen-security';
+import { useScreenSecurity, useScreenshotDetection } from 'react-native-screen-security';
 
 export function ConfidentialDocumentScreen() {
   useScreenSecurity();
@@ -206,10 +204,7 @@ export function SettingsScreen() {
 ```tsx
 // App.tsx or AuthenticatedNavigator.tsx
 import { useEffect } from 'react';
-import {
-  enableFullProtection,
-  disableFullProtection,
-} from 'react-native-screen-security';
+import { enableFullProtection, disableFullProtection } from 'react-native-screen-security';
 
 export function AuthenticatedApp() {
   useEffect(() => {
@@ -226,10 +221,7 @@ export function AuthenticatedApp() {
 
 ```tsx
 import { useEffect } from 'react';
-import {
-  enableFullProtection,
-  disableFullProtection,
-} from 'react-native-screen-security';
+import { enableFullProtection, disableFullProtection } from 'react-native-screen-security';
 
 function AppRoot() {
   const isSecurityEnabled = useAppSelector(state => state.settings.screenSecurity);
@@ -298,21 +290,21 @@ enableFullProtection('system');
 disableFullProtection();
 
 // Granular control
-setSecureWindow(true);              // block capture/screenshots
-setAppSwitcherBlur(true, 'dark');   // iOS only — blur in app switcher
+setSecureWindow(true); // block capture/screenshots
+setAppSwitcherBlur(true, 'dark'); // iOS only — blur in app switcher
 setSecureWindow(false);
 setAppSwitcherBlur(false, 'system');
 ```
 
-| Function | When to use |
-|----------|-------------|
-| `useScreenSecurity()` | Per screen — iOS blur; use with `<SecureView>` on Android |
-| `SecureView` | Wrap sensitive UI — required for Android component protection |
-| `enableFullProtection()` | App-wide — call in `useEffect` or after auth |
-| `setSecureWindow(true/false)` | Fine-grained global window control |
-| `useScreenshotDetection(cb)` | React component — react to screenshots |
-| `useScreenRecordingDetection(cb)` | iOS only — screen recording status |
-| `onScreenshotTaken(cb)` | Non-React code — returns subscription to `.remove()` |
+| Function                          | When to use                                                   |
+| --------------------------------- | ------------------------------------------------------------- |
+| `useScreenSecurity()`             | Per screen — iOS blur; use with `<SecureView>` on Android     |
+| `SecureView`                      | Wrap sensitive UI — required for Android component protection |
+| `enableFullProtection()`          | App-wide — call in `useEffect` or after auth                  |
+| `setSecureWindow(true/false)`     | Fine-grained global window control                            |
+| `useScreenshotDetection(cb)`      | React component — react to screenshots                        |
+| `useScreenRecordingDetection(cb)` | iOS only — screen recording status                            |
+| `onScreenshotTaken(cb)`           | Non-React code — returns subscription to `.remove()`          |
 
 ---
 
@@ -322,11 +314,11 @@ setAppSwitcherBlur(false, 'system');
 
 #### `useScreenSecurity(options?)`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
+| Option            | Type                      | Default       | Description                                               |
+| ----------------- | ------------------------- | ------------- | --------------------------------------------------------- |
 | `protectionLevel` | `'component' \| 'global'` | `'component'` | `global` applies window-wide protection on both platforms |
-| `blur` | `boolean` | `true` | Enable app switcher blur on iOS |
-| `blurStyle` | `BlurStyle` | `'system'` | `'light'`, `'dark'`, or `'system'` |
+| `blur`            | `boolean`                 | `true`        | Enable app switcher blur on iOS                           |
+| `blurStyle`       | `BlurStyle`               | `'system'`    | `'light'`, `'dark'`, or `'system'`                        |
 
 #### `useScreenshotDetection(callback: () => void)`
 
@@ -342,13 +334,13 @@ Cross-platform container for sensitive content. Required on Android for componen
 
 ### Functions
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `setSecureWindow` | `(enable: boolean) => void` | Toggle secure window |
-| `setAppSwitcherBlur` | `(enable: boolean, style?: BlurStyle) => void` | Toggle iOS app switcher blur |
-| `enableFullProtection` | `(blurStyle?: BlurStyle) => void` | Secure window + iOS blur |
-| `disableFullProtection` | `() => void` | Disable all protection |
-| `onScreenshotTaken` | `(callback: () => void) => EmitterSubscription` | Subscribe to screenshot events |
+| Function                | Signature                                       | Description                    |
+| ----------------------- | ----------------------------------------------- | ------------------------------ |
+| `setSecureWindow`       | `(enable: boolean) => void`                     | Toggle secure window           |
+| `setAppSwitcherBlur`    | `(enable: boolean, style?: BlurStyle) => void`  | Toggle iOS app switcher blur   |
+| `enableFullProtection`  | `(blurStyle?: BlurStyle) => void`               | Secure window + iOS blur       |
+| `disableFullProtection` | `() => void`                                    | Disable all protection         |
+| `onScreenshotTaken`     | `(callback: () => void) => EmitterSubscription` | Subscribe to screenshot events |
 
 ### Types
 
@@ -365,23 +357,23 @@ interface ScreenSecurityOptions {
 
 ### Events
 
-| Event | Payload | When fired | Platforms |
-|-------|---------|------------|-----------|
-| `onScreenshotTaken` | `{}` | User takes a screenshot or screen capture starts | iOS, Android |
-| `onScreenRecordingStatusChanged` | `{ isCaptured: boolean }` | Screen recording starts or stops | iOS only |
+| Event                            | Payload                   | When fired                                       | Platforms    |
+| -------------------------------- | ------------------------- | ------------------------------------------------ | ------------ |
+| `onScreenshotTaken`              | `{}`                      | User takes a screenshot or screen capture starts | iOS, Android |
+| `onScreenRecordingStatusChanged` | `{ isCaptured: boolean }` | Screen recording starts or stops                 | iOS only     |
 
 ---
 
 ## Platform behavior
 
-| Feature | iOS | Android |
-|---------|-----|---------|
-| `SecureView` + `component` mode | GPU-blanks wrapped content during capture | `FLAG_SECURE` while hosting Fragment is resumed (tab-safe) |
-| `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur | Window `FLAG_SECURE` (ref-counted) |
-| `setSecureWindow(true)` | Content renders black during recording/capture | Blocks screenshots, recording, and recents preview |
-| `setAppSwitcherBlur` | Blur overlay in app switcher | No-op (`FLAG_SECURE` already masks recents) |
-| Screenshot detection | `userDidTakeScreenshot` + screen capture | `ScreenCaptureCallback` (API 34+) or `ContentObserver` fallback |
-| Screen recording detection | `UIScreen.capturedDidChangeNotification` | Not available |
+| Feature                                            | iOS                                            | Android                                                         |
+| -------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
+| `SecureView` + `component` mode                    | GPU-blanks wrapped content during capture      | `FLAG_SECURE` while hosting Fragment is resumed (tab-safe)      |
+| `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur            | Window `FLAG_SECURE` (ref-counted)                              |
+| `setSecureWindow(true)`                            | Content renders black during recording/capture | Blocks screenshots, recording, and recents preview              |
+| `setAppSwitcherBlur`                               | Blur overlay in app switcher                   | No-op (`FLAG_SECURE` already masks recents)                     |
+| Screenshot detection                               | `userDidTakeScreenshot` + screen capture       | `ScreenCaptureCallback` (API 34+) or `ContentObserver` fallback |
+| Screen recording detection                         | `UIScreen.capturedDidChangeNotification`       | Not available                                                   |
 
 ---
 
@@ -395,11 +387,11 @@ interface ScreenSecurityOptions {
 
 ## Testing
 
-| Feature | iOS Simulator | iOS Device | Android Emulator |
-|---------|:---:|:---:|:---:|
-| App switcher blur | Yes | Yes | N/A |
-| Secure window blocking | No | Yes | Yes |
-| Screenshot detection | No | Yes | Yes (API 34+) |
+| Feature                | iOS Simulator | iOS Device | Android Emulator |
+| ---------------------- | :-----------: | :--------: | :--------------: |
+| App switcher blur      |      Yes      |    Yes     |       N/A        |
+| Secure window blocking |      No       |    Yes     |       Yes        |
+| Screenshot detection   |      No       |    Yes     |  Yes (API 34+)   |
 
 **iOS:** use a real device for secure window and screenshot tests.
 
