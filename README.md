@@ -1,3 +1,5 @@
+[![npm version](https://img.shields.io/npm/v/react-native-screen-security.svg)](https://www.npmjs.com/)
+[![license](https://img.shields.io/npm/l/react-native-screen-security.svg)](https://github.com/yuriikluban/react-native-screen-security/blob/main/LICENSE)
 # react-native-screen-security
 
 Native screen security for React Native **New Architecture** (TurboModules). Block screen capture, protect sensitive content in the app switcher, and detect screenshots — with zero Bridge overhead.
