@@ -1,9 +1,15 @@
+[![CI](https://github.com/yuriiKluban/react-native-screen-security/actions/workflows/ci.yml/badge.flow.svg)](https://github.com/yuriiKluban/react-native-screen-security/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/react-native-screen-security.svg)](https://www.npmjs.com/)
 [![license](https://img.shields.io/npm/l/react-native-screen-security.svg)](https://github.com/yuriikluban/react-native-screen-security/blob/main/LICENSE)
 
 # react-native-screen-security
 
-Native screen security for React Native **New Architecture** (TurboModules). Block screen capture, protect sensitive content in the app switcher, and detect screenshots — with zero Bridge overhead.
+High-performance UI security and Data Leakage Prevention (DLP) for React Native **New Architecture** (Fabric & TurboModules). Prevent screenshots, mask sensitive content in the OS App Switcher, and detect screen capture events — with zero Bridge overhead.
+
+## Key Features
+* 🚫 **Screen Capture Prevention** — Leverages Android's `FLAG_SECURE` to block screenshots and screen recordings globally or per-screen.
+* 👁️ **App Switcher Masking (iOS)** — Protects user privacy by automatically blurring or hiding sensitive views (like credit cards or balances) when the app goes into the background.
+* 🔔 **Screenshot Detection** — Provides clean, reactive hooks to notify your app whenever a screenshot is taken.
 
 ## Table of contents
 
