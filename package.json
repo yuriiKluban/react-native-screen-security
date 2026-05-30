@@ -1,0 +1,62 @@
+{
+  "name": "react-native-screen-security",
+  "version": "1.0.0",
+  "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
+  "summary": "Native screen security and snapshot protection for React Native New Architecture",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "author": "Yurii Kluban <ykluban9@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/yuriikluban/react-native-screen-security#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuriikluban/react-native-screen-security.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yuriikluban/react-native-screen-security/issues"
+  },
+  "keywords": [
+    "react-native",
+    "turbo-module",
+    "new-architecture",
+    "screen-security",
+    "screenshot",
+    "screen-capture",
+    "flag-secure",
+    "privacy",
+    "ios",
+    "android"
+  ],
+  "files": [
+    "src",
+    "ios",
+    "android",
+    "react-native-screen-security.podspec",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "peerDependencies": {
+    "react": ">=18",
+    "react-native": ">=0.79"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "react-native": "src/index.ts",
+  "codegenConfig": {
+    "name": "RTNScreenSecuritySpec",
+    "type": "all",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.reactnativescreensecurity"
+    },
+    "ios": {
+      "componentProvider": {
+        "SecureView": "RTNSecureView"
+      }
+    }
+  }
+}
