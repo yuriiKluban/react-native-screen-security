@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./lib",
+    "rootDir": "./src",
+    "strict": true,
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-native"
+  },
+  "include": ["src"]
+}
