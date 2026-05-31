@@ -3,7 +3,8 @@
   "version": "1.0.3",
   "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
   "summary": "Native screen security and snapshot protection for React Native New Architecture",
-  "main": "lib/index.ts",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "Yurii Kluban <ykluban9@gmail.com>",
   "license": "MIT",
@@ -39,7 +40,9 @@
     "SECURITY.md"
   ],
   "scripts": {
-    "prepare": "tsc",
+    "build:types": "tsc",
+    "build:js": "babel src --out-dir lib --extensions '.ts,.tsx'",
+    "prepare": "rm -rf lib && yarn build:types && yarn build:js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"./**/*.{ts,tsx}\"",
     "format": "prettier --write \"./**/*.{ts,tsx,json,md}\""
@@ -67,6 +70,8 @@
     }
   },
   "devDependencies": {
+    "@babel/cli": "^7.29.7",
+    "@babel/core": "^7.29.7",
     "@eslint/js": "^9.0.0",
     "@types/react": "^19.2.15",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
@@ -76,6 +81,7 @@
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.8.3",
     "react-native": "^0.85.3",
     "typescript": "^6.0.3",
