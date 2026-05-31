@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-05-31
+
+### Added
+
+- README **See it in action** section with iOS `SecureView` masking, Android screenshot blocking, and app-switcher privacy screenshots
+- `.github/assets` included in the published npm package
+
+### Changed
+
+- README images use absolute GitHub raw URLs so they render on npmjs.com and GitHub
+
 ## [1.1.0] - 2026-05-31
 
 ### Fixed
