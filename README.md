@@ -91,6 +91,31 @@ Then: `yarn install` → `cd ios && pod install` → rebuild.
 
 ---
 
+## Choosing an API
+
+Use this decision tree to pick the right integration:
+
+| Your goal | Use |
+| --------- | --- |
+| Protect one screen in a tab navigator (Android) | `<SecureView>` (or `<SecureWindowAnchor />` at screen root) |
+| GPU-blank a region on iOS + app-switcher blur | `useScreenSecurity()` + `<SecureView>` around sensitive content |
+| Protect the entire app after login | `useScreenSecurity({ protectionLevel: 'global' })` at app root |
+| Fragment-scoped Android protection without wrapping UI | `<SecureWindowAnchor />` |
+| Toggle protection from settings | `useScreenSecurity({ enabled: isOn })` or imperative API (see ref-count note below) |
+
+**Android tabs:** component-level protection works best with [`react-native-screens`](https://github.com/software-mansion/react-native-screens) native fragments. The library binds `FLAG_SECURE` to Fragment resume/pause — no hard peer dependency, but tabs without native screen fragments may not behave correctly.
+
+### Ref-count semantics
+
+`setSecureWindow(true)` and `setSecureWindow(false)` are **+1 / −1 deltas**, not absolute on/off toggles. The same applies to `enableFullProtection()` / `disableFullProtection()` and `useScreenSecurity({ protectionLevel: 'global' })`.
+
+- Mount two global hooks → native ref count is 2; unmounting one leaves protection active.
+- Call `enableFullProtection()` twice → call `disableFullProtection()` twice to fully release.
+
+On iOS, `setAppSwitcherBlur` is also ref-counted. When multiple hooks enable blur with different `blurStyle` values, the **last caller's style** applies while the ref count stays above zero.
+
+---
+
 ## Usage
 
 ### Step 1: Import
@@ -101,6 +126,8 @@ import {
   useScreenshotDetection,
   useScreenRecordingDetection,
   SecureView,
+  SecureWindowAnchor,
+  onScreenRecordingStatusChanged,
   enableFullProtection,
   disableFullProtection,
 } from 'react-native-screen-security';
@@ -138,7 +165,7 @@ useScreenSecurity({ protectionLevel: 'global' });
 
 ```tsx
 useScreenSecurity({ blur: true, blurStyle: 'dark' });
-// blurStyle options: 'light' | 'dark' | 'system' (default)
+// blurStyle options: 'light' | 'dark' | 'system' | 'extraLight' (default: 'system')
 ```
 
 **Secure window only (no app switcher blur on iOS):**
@@ -176,7 +203,7 @@ export function ConfidentialDocumentScreen() {
 ```tsx
 import { useScreenRecordingDetection } from 'react-native-screen-security';
 
-useScreenRecordingDetection(isCaptured => {
+useScreenRecordingDetection(({ isCaptured }) => {
   console.log('Screen recording:', isCaptured ? 'started' : 'stopped');
 });
 ```
@@ -325,7 +352,8 @@ setAppSwitcherBlur(false, 'system');
 | ----------------- | ------------------------- | ------------- | --------------------------------------------------------- |
 | `protectionLevel` | `'component' \| 'global'` | `'component'` | `global` applies window-wide protection on both platforms |
 | `blur`            | `boolean`                 | `true`        | Enable app switcher blur on iOS                           |
-| `blurStyle`       | `BlurStyle`               | `'system'`    | `'light'`, `'dark'`, or `'system'`                        |
+| `blurStyle`       | `BlurStyle`               | `'system'`    | `'light'`, `'dark'`, `'system'`, or `'extraLight'`        |
+| `enabled`         | `boolean`                 | `true`        | When `false`, the hook is a no-op                         |
 
 #### `useScreenshotDetection(callback: () => void)`
 
@@ -339,26 +367,42 @@ Subscribes to `onScreenRecordingStatusChanged`. **iOS only.**
 
 Cross-platform container for sensitive content. Required on Android for component-level `FLAG_SECURE` (including tab navigators).
 
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `fill` | `boolean` | `false` | When `true`, applies `flex: 1` (pre-1.1.0 / 1.0.x default behavior) |
+| `enabled` | `boolean` | `true` | When `false`, renders a plain `View` without native protection |
+
+Does not apply `flex: 1` by default — pass `fill` or `style={{ flex: 1 }}` for full-screen wrappers.
+
+#### `SecureWindowAnchor`
+
+Android-only invisible anchor that binds `FLAG_SECURE` to the hosting native Fragment. Use at the screen root when you need fragment-scoped protection without wrapping content in `SecureView`. Renders `null` on iOS.
+
 ### Functions
 
 | Function                | Signature                                       | Description                    |
 | ----------------------- | ----------------------------------------------- | ------------------------------ |
-| `setSecureWindow`       | `(enable: boolean) => void`                     | Toggle secure window           |
-| `setAppSwitcherBlur`    | `(enable: boolean, style?: BlurStyle) => void`  | Toggle iOS app switcher blur   |
+| `setSecureWindow`       | `(enable: boolean) => void`                     | Ref-count +1/−1 for global secure window |
+| `setAppSwitcherBlur`    | `(enable: boolean, style?: BlurStyle) => void`  | Ref-count +1/−1 for iOS app switcher blur |
 | `enableFullProtection`  | `(blurStyle?: BlurStyle) => void`               | Secure window + iOS blur       |
 | `disableFullProtection` | `() => void`                                    | Disable all protection         |
 | `onScreenshotTaken`     | `(callback: () => void) => EmitterSubscription` | Subscribe to screenshot events |
+| `onScreenRecordingStatusChanged` | `(callback: (event: { isCaptured: boolean }) => void) => EmitterSubscription` | Subscribe to recording status (iOS only) |
 
 ### Types
 
 ```ts
-type BlurStyle = 'light' | 'dark' | 'system';
+type BlurStyle = 'light' | 'dark' | 'system' | 'extraLight';
 type ProtectionLevel = 'component' | 'global';
+
+type ScreenRecordingEvent = { isCaptured: boolean };
+type ScreenshotEvent = Record<string, never>;
 
 interface ScreenSecurityOptions {
   protectionLevel?: ProtectionLevel;
   blur?: boolean;
   blurStyle?: BlurStyle;
+  enabled?: boolean;
 }
 ```
 
@@ -376,7 +420,7 @@ interface ScreenSecurityOptions {
 | Feature                                            | iOS                                            | Android                                                         |
 | -------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
 | `SecureView` + `component` mode                    | GPU-blanks wrapped content during capture      | `FLAG_SECURE` while hosting Fragment is resumed (tab-safe)      |
-| `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur            | Window `FLAG_SECURE` (ref-counted)                              |
+| `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur (ref-counted) | Window `FLAG_SECURE` (ref-counted)                              |
 | `setSecureWindow(true)`                            | Content renders black during recording/capture | Blocks screenshots, recording, and recents preview              |
 | `setAppSwitcherBlur`                               | Blur overlay in app switcher                   | No-op (`FLAG_SECURE` already masks recents)                     |
 | Screenshot detection                               | `userDidTakeScreenshot` + screen capture       | `ScreenCaptureCallback` (API 34+) or `ContentObserver` fallback |
@@ -393,6 +437,16 @@ interface ScreenSecurityOptions {
 ---
 
 ## Testing
+
+### Library unit tests
+
+```bash
+yarn test
+```
+
+Hook ref-count behavior and event payloads are covered with a mocked native module (no device required).
+
+### Manual device testing
 
 | Feature                | iOS Simulator | iOS Device | Android Emulator |
 | ---------------------- | :-----------: | :--------: | :--------------: |
@@ -428,6 +482,14 @@ adb shell input keyevent 120
 **Screenshot events not firing on iOS Simulator** — not supported. Use a real device.
 
 **Events not received** — subscribe before taking a screenshot. The native observer starts when the first listener is added.
+
+## Migration
+
+### 1.0.x → 1.1.0
+
+- `useScreenRecordingDetection` callback now receives `{ isCaptured: boolean }` instead of a bare boolean
+- `<SecureView>` no longer defaults to `flex: 1` — add `style={{ flex: 1 }}` or use `<SecureView fill>`
+- Optional: `<SecureView enabled={false}>` to conditionally disable a region without unmounting
 
 ## License
 

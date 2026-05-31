@@ -12,6 +12,8 @@ import UIKit
     private var currentBlurStyle: String = "system"
     private var isBlurEnabled = false
     private var isSecureEnabled = false
+    private var secureWindowRefCount = 0
+    private var blurRefCount = 0
     private var screenCaptureObservation: NSObjectProtocol?
     private var screenCaptureProtectionObservation: NSObjectProtocol?
     private var screenshotProtectionObservation: NSObjectProtocol?
@@ -35,13 +37,19 @@ import UIKit
     @objc public func setSecureWindow(_ enable: Bool) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            guard self.isSecureEnabled != enable else { return }
-            self.isSecureEnabled = enable
+
             if enable {
+                self.secureWindowRefCount += 1
+                guard self.secureWindowRefCount == 1 else { return }
+                self.isSecureEnabled = true
                 self.enableSecureLayer()
                 self.startScreenCaptureProtection()
                 self.startScreenshotProtection()
             } else {
+                guard self.secureWindowRefCount > 0 else { return }
+                self.secureWindowRefCount -= 1
+                guard self.secureWindowRefCount == 0 else { return }
+                self.isSecureEnabled = false
                 self.disableSecureLayer()
                 self.stopScreenCaptureProtection()
                 self.stopScreenshotProtection()
@@ -213,14 +221,18 @@ import UIKit
             if enable {
                 let styleChanged = self.currentBlurStyle != style
                 self.currentBlurStyle = style
+                self.blurRefCount += 1
 
-                if !self.isBlurEnabled {
+                if self.blurRefCount == 1 {
                     self.isBlurEnabled = true
                     self.registerBlurObservers()
                 } else if styleChanged {
                     self.updateBlurStyleIfVisible()
                 }
-            } else if self.isBlurEnabled {
+            } else {
+                guard self.blurRefCount > 0 else { return }
+                self.blurRefCount -= 1
+                guard self.blurRefCount == 0 else { return }
                 self.isBlurEnabled = false
                 self.unregisterBlurObservers()
                 self.removeBlurOverlay()
@@ -356,6 +368,10 @@ import UIKit
     @objc public func invalidate() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            self.secureWindowRefCount = 0
+            self.blurRefCount = 0
+            self.isSecureEnabled = false
+            self.isBlurEnabled = false
             self.disableSecureLayer()
             self.stopScreenCaptureProtection()
             self.stopScreenshotProtection()

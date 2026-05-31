@@ -1,6 +1,6 @@
 {
   "name": "react-native-screen-security",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
   "summary": "Native screen security and snapshot protection for React Native New Architecture",
   "main": "lib/index.js",
@@ -41,11 +41,13 @@
   ],
   "scripts": {
     "build:types": "tsc",
-    "build:js": "babel src --out-dir lib --extensions '.ts,.tsx'",
-    "prepare": "rm -rf lib && yarn build:types && yarn build:js",
+    "build:js": "babel src --out-dir lib --extensions .ts,.tsx",
+    "build": "yarn build:types && yarn build:js",
+    "prepare": "rimraf lib && yarn build:types && yarn build:js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"./**/*.{ts,tsx}\"",
-    "format": "prettier --write \"./**/*.{ts,tsx,json,md}\""
+    "format": "prettier --write \"./**/*.{ts,tsx,json,md}\"",
+    "test": "jest"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -72,18 +74,26 @@
   "devDependencies": {
     "@babel/cli": "^7.29.7",
     "@babel/core": "^7.29.7",
-    "@eslint/js": "^9.0.0",
+    "@react-native/babel-preset": "^0.85.3",
+    "@react-native/jest-preset": "^0.85.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "^19.2.15",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
     "@typescript-eslint/parser": "^8.60.0",
+    "babel-jest": "^29.7.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "jest": "^29.7.0",
     "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.8.3",
+    "react": "^19.2.3",
     "react-native": "^0.85.3",
+    "react-test-renderer": "^19.2.3",
+    "rimraf": "^6.0.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.0"
   }

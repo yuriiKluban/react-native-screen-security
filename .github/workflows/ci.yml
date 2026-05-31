@@ -29,3 +29,12 @@ jobs:
 
       - name: Run ESLint
         run: yarn lint
+
+      - name: Build library output
+        run: yarn build
+
+      - name: Verify lib artifacts
+        run: test -f lib/index.js && test -f lib/index.d.ts
+
+      - name: Run unit tests
+        run: yarn test
