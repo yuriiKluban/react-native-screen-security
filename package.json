@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
   "summary": "Native screen security and snapshot protection for React Native New Architecture",
-  "main": "src/index.ts",
+  "main": "lib/index.ts",
   "types": "lib/index.d.ts",
   "author": "Yurii Kluban <ykluban9@gmail.com>",
   "license": "MIT",
@@ -29,6 +29,7 @@
   ],
   "files": [
     "src",
+    "lib",
     "ios",
     "android",
     "react-native-screen-security.podspec",
