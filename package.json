@@ -1,6 +1,6 @@
 {
   "name": "react-native-screen-security",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
   "summary": "Native screen security and snapshot protection for React Native New Architecture",
   "main": "lib/index.js",
@@ -33,6 +33,7 @@
     "lib",
     "ios",
     "android",
+    ".github/assets",
     "react-native-screen-security.podspec",
     "README.md",
     "CHANGELOG.md",

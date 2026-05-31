@@ -15,6 +15,7 @@ High-performance UI security and Data Leakage Prevention (DLP) for React Native 
 ## Table of contents
 
 - [Features](#features)
+- [See it in action](#see-it-in-action)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -42,6 +43,32 @@ High-performance UI security and Data Leakage Prevention (DLP) for React Native 
 - **Screen recording detection (iOS)** — `useScreenRecordingDetection` hook
 - **React hooks** — `useScreenSecurity`, `useScreenshotDetection`
 - **Autolinking** — works out of the box with React Native autolinking
+
+## See it in action
+
+### iOS — `SecureView` component masking
+
+Wrap sensitive UI in `<SecureView>` for per-region GPU blanking. The live app stays fully readable; captured screenshots and recordings mask only the protected component.
+
+<p align="center">
+  <img src="https://github.com/yuriikluban/react-native-screen-security/raw/main/.github/assets/ios_blur.png" alt="iOS: original app interface (left) vs captured screenshot with SecureView mask on the credit card (right)" width="900" />
+</p>
+
+### Android — screenshot & recording blocked (`FLAG_SECURE`)
+
+Window or fragment-scoped `FLAG_SECURE` blocks screenshots and screen recordings. Android shows a system notification when capture is denied.
+
+<p align="center">
+  <img src="https://github.com/yuriikluban/react-native-screen-security/raw/main/.github/assets/android_blur.png" alt="Android app showing the system toast: This app doesn't allow screenshots" width="360" />
+</p>
+
+### App switcher privacy
+
+When the app enters the background, iOS blurs the window in the task switcher (`setAppSwitcherBlur` / `useScreenSecurity`). Android hides the recents preview while `FLAG_SECURE` is active.
+
+<p align="center">
+  <img src="https://github.com/yuriikluban/react-native-screen-security/raw/main/.github/assets/app_switch.png" alt="iOS app switcher with blur overlay vs Android recents with hidden app preview" width="900" />
+</p>
 
 ## Requirements
 
@@ -167,6 +194,8 @@ useScreenSecurity({ protectionLevel: 'global' });
 useScreenSecurity({ blur: true, blurStyle: 'dark' });
 // blurStyle options: 'light' | 'dark' | 'system' | 'extraLight' (default: 'system')
 ```
+
+See [App switcher privacy](#app-switcher-privacy) for a visual preview on iOS and Android.
 
 **Secure window only (no app switcher blur on iOS):**
 
@@ -365,7 +394,7 @@ Subscribes to `onScreenRecordingStatusChanged`. **iOS only.**
 
 #### `SecureView`
 
-Cross-platform container for sensitive content. Required on Android for component-level `FLAG_SECURE` (including tab navigators).
+Cross-platform container for sensitive content. Required on Android for component-level `FLAG_SECURE` (including tab navigators). On iOS, only wrapped regions are GPU-blanked during capture — see [See it in action](#see-it-in-action).
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
@@ -421,8 +450,8 @@ interface ScreenSecurityOptions {
 | -------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
 | `SecureView` + `component` mode                    | GPU-blanks wrapped content during capture      | `FLAG_SECURE` while hosting Fragment is resumed (tab-safe)      |
 | `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur (ref-counted) | Window `FLAG_SECURE` (ref-counted)                              |
-| `setSecureWindow(true)`                            | Content renders black during recording/capture | Blocks screenshots, recording, and recents preview              |
-| `setAppSwitcherBlur`                               | Blur overlay in app switcher                   | No-op (`FLAG_SECURE` already masks recents)                     |
+| `setSecureWindow(true)`                            | Content renders black during recording/capture | Blocks screenshots, recording, and recents preview — see [See it in action](#see-it-in-action) |
+| `setAppSwitcherBlur`                               | Blur overlay in app switcher                   | No-op (`FLAG_SECURE` already masks recents) — see [App switcher privacy](#app-switcher-privacy) |
 | Screenshot detection                               | `userDidTakeScreenshot` + screen capture       | `ScreenCaptureCallback` (API 34+) or `ContentObserver` fallback |
 | Screen recording detection                         | `UIScreen.capturedDidChangeNotification`       | Not available                                                   |
 
