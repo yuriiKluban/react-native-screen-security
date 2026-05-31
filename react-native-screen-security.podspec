@@ -12,6 +12,10 @@ Pod::Spec.new do |s|
   s.platforms       = { :ios => "13.4" }
   s.author          = package["author"]
   s.source          = { :git => "https://github.com/yuriikluban/react-native-screen-security.git", :tag => "#{s.version}" }
+  s.module_name = 'react_native_screen_security'
+  s.pod_target_xcconfig = {
+    'DEFINES_MODULE' => 'YES',
+  }
 
   s.source_files    = "ios/**/*.{h,m,mm,swift}"
   s.swift_version   = "5.0"

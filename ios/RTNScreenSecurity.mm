@@ -1,5 +1,9 @@
 #import "RTNScreenSecurity.h"
+#if __has_include(<react_native_screen_security/react_native_screen_security-Swift.h>)
 #import <react_native_screen_security/react_native_screen_security-Swift.h>
+#else
+#import "react_native_screen_security-Swift.h"
+#endif
 
 @interface RTNScreenSecurity ()
 @property (nonatomic, strong) ScreenSecurityManager *manager;
