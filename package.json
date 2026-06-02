@@ -69,6 +69,10 @@
   "engines": {
     "node": ">=18"
   },
+  "resolutions": {
+    "react": "19.2.3",
+    "react-native": "0.85.3"
+  },
   "sideEffects": false,
   "react-native": "src/index.ts",
   "codegenConfig": {

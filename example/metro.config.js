@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
@@ -6,36 +5,39 @@ const root = path.resolve(__dirname, '..');
 const exampleModules = path.resolve(__dirname, 'node_modules');
 const rootModules = path.resolve(root, 'node_modules');
 
-function resolvePackage(name) {
-  const inExample = path.join(exampleModules, name);
-  if (fs.existsSync(inExample)) {
-    return inExample;
-  }
-  return path.join(rootModules, name);
-}
-
-const reactDir = resolvePackage('react');
-const reactNativeDir = resolvePackage('react-native');
-const hasExampleReactNative = fs.existsSync(path.join(exampleModules, 'react-native'));
+// Single React/RN instance for the whole bundle (app + linked library source).
+const reactDir = path.join(exampleModules, 'react');
+const reactNativeDir = path.join(exampleModules, 'react-native');
 
 const defaultConfig = getDefaultConfig(__dirname);
 
 const config = {
   watchFolders: [root],
   resolver: {
-    nodeModulesPaths: [exampleModules, rootModules],
+    // Do not walk up from repo-root src/ into root/node_modules/react.
+    nodeModulesPaths: [exampleModules],
     extraNodeModules: {
       react: reactDir,
       'react-native': reactNativeDir,
+      'react-native-screen-security': root,
     },
-    ...(hasExampleReactNative
-      ? {
-          blockList: [
-            new RegExp(`${escapePath(rootModules)}/react-native/.*`),
-            new RegExp(`${escapePath(rootModules)}/react/.*`),
-          ],
-        }
-      : {}),
+    blockList: [
+      // Library jest/devDeps — must not be bundled alongside example's React.
+      new RegExp(`${escapePath(rootModules)}/react/.*`),
+      new RegExp(`${escapePath(rootModules)}/react-native/.*`),
+      // Nested duplicates (e.g. hoisted sub-deps).
+      /node_modules\/.*\/node_modules\/react\/.*/,
+      /node_modules\/.*\/node_modules\/react-native\/.*/,
+    ],
+    resolveRequest(context, moduleName, platform) {
+      if (moduleName === 'react' || moduleName === 'react-native') {
+        return {
+          type: 'sourceFile',
+          filePath: require.resolve(moduleName, { paths: [exampleModules] }),
+        };
+      }
+      return context.resolveRequest(context, moduleName, platform);
+    },
   },
 };
 
