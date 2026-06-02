@@ -1,6 +1,18 @@
 {
   "name": "react-native-screen-security",
   "version": "1.1.1",
+  "private": true,
+  "workspaces": {
+    "packages": ["example"],
+    "nohoist": [
+      "example/react-native",
+      "example/react-native/**",
+      "example/react",
+      "example/react/**",
+      "example/@react-native/**",
+      "example/@react-native-community/**"
+    ]
+  },
   "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
   "summary": "Native screen security and snapshot protection for React Native New Architecture",
   "main": "lib/index.js",
@@ -42,7 +54,7 @@
   ],
   "scripts": {
     "build:types": "tsc",
-    "build:js": "babel src --out-dir lib --extensions .ts,.tsx",
+    "build:js": "babel src --out-dir lib --extensions .ts,.tsx --ignore \"**/__tests__/**\"",
     "build": "yarn build:types && yarn build:js",
     "prepare": "rimraf lib && yarn build:types && yarn build:js",
     "typecheck": "tsc --noEmit",
@@ -68,7 +80,8 @@
     },
     "ios": {
       "componentProvider": {
-        "SecureView": "RTNSecureView"
+        "SecureView": "RTNSecureView",
+        "RTNSecureWindowAnchor": "RTNSecureWindowAnchorView"
       }
     }
   },

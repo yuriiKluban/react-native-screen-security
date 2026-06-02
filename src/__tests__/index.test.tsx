@@ -109,6 +109,23 @@ describe('imperative protection API', () => {
 });
 
 describe('useScreenRecordingDetection', () => {
+  const originalPlatform = Platform.OS;
+
+  afterEach(() => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: originalPlatform });
+    jest.restoreAllMocks();
+  });
+
+  it('warns once on Android in development', () => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    renderHook(() => useScreenRecordingDetection(jest.fn()));
+    renderHook(() => useScreenRecordingDetection(jest.fn()));
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('passes ScreenRecordingEvent object to the callback', () => {
     const callback = jest.fn();
 

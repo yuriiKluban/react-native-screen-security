@@ -12,7 +12,7 @@ jest.mock('./src/SecureViewNativeComponent', () => {
   };
 });
 
-jest.mock('./src/SecureWindowAnchorNative', () => {
+jest.mock('./src/SecureWindowAnchorNativeComponent', () => {
   const React = require('react');
   const { View } = require('react-native');
 

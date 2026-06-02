@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { type EmitterSubscription, NativeEventEmitter, Platform } from 'react-native';
 
-import NativeScreenSecurity from './NativeScreenSecurity';
+import NativeScreenSecurity, { type SecurityState } from './NativeScreenSecurity';
 
 export { SecureView } from './SecureView';
 export type { SecureViewProps } from './SecureView';
 export { SecureWindowAnchor } from './SecureWindowAnchor';
+export type { SecurityState } from './NativeScreenSecurity';
 
 export type BlurStyle = 'light' | 'dark' | 'system' | 'extraLight';
 
@@ -14,6 +15,8 @@ export type ProtectionLevel = 'component' | 'global';
 export type ScreenRecordingEvent = { isCaptured: boolean };
 
 export type ScreenshotEvent = Record<string, never>;
+
+export type SecurityToken = { release: () => void };
 
 export interface ScreenSecurityOptions {
   /**
@@ -32,9 +35,17 @@ export interface ScreenSecurityOptions {
   enabled?: boolean;
 }
 
-const emitter = new NativeEventEmitter(NativeScreenSecurity);
+let _emitter: NativeEventEmitter | null = null;
+
+function getEmitter(): NativeEventEmitter {
+  if (!_emitter) {
+    _emitter = new NativeEventEmitter(NativeScreenSecurity);
+  }
+  return _emitter;
+}
 
 let androidComponentModeWarningShown = false;
+let recordingDetectionWarningShown = false;
 
 export function setSecureWindow(enable: boolean): void {
   NativeScreenSecurity.setSecureWindow(enable);
@@ -48,8 +59,43 @@ export function setAppSwitcherBlur(enable: boolean, style: BlurStyle = 'system')
   NativeScreenSecurity.setAppSwitcherBlur(enable, style);
 }
 
+export function getSecurityState(): SecurityState {
+  return NativeScreenSecurity.getSecurityState();
+}
+
+/**
+ * Acquires global window protection. Call `release()` when done (idempotent).
+ */
+export function acquireSecureWindow(): SecurityToken {
+  let released = false;
+  setSecureWindow(true);
+  return {
+    release() {
+      if (released) return;
+      released = true;
+      setSecureWindow(false);
+    },
+  };
+}
+
+/**
+ * Acquires iOS app-switcher blur. Call `release()` when done (idempotent).
+ * @platform ios
+ */
+export function acquireAppSwitcherBlur(style: BlurStyle = 'system'): SecurityToken {
+  let released = false;
+  setAppSwitcherBlur(true, style);
+  return {
+    release() {
+      if (released) return;
+      released = true;
+      setAppSwitcherBlur(false, 'system');
+    },
+  };
+}
+
 export function onScreenshotTaken(callback: () => void): EmitterSubscription {
-  return emitter.addListener('onScreenshotTaken', callback);
+  return getEmitter().addListener('onScreenshotTaken', callback);
 }
 
 /**
@@ -59,7 +105,7 @@ export function onScreenshotTaken(callback: () => void): EmitterSubscription {
 export function onScreenRecordingStatusChanged(
   callback: (event: ScreenRecordingEvent) => void,
 ): EmitterSubscription {
-  return emitter.addListener('onScreenRecordingStatusChanged', callback);
+  return getEmitter().addListener('onScreenRecordingStatusChanged', callback);
 }
 
 export function enableFullProtection(blurStyle: BlurStyle = 'system'): void {
@@ -156,7 +202,8 @@ export function useScreenRecordingDetection(callback: (event: ScreenRecordingEve
   }, [callback]);
 
   useEffect(() => {
-    if (__DEV__ && Platform.OS === 'android') {
+    if (__DEV__ && Platform.OS === 'android' && !recordingDetectionWarningShown) {
+      recordingDetectionWarningShown = true;
       console.warn('[react-native-screen-security] useScreenRecordingDetection is iOS-only.');
     }
 
@@ -166,12 +213,3 @@ export function useScreenRecordingDetection(callback: (event: ScreenRecordingEve
     return () => subscription.remove();
   }, []);
 }
-
-export default {
-  setSecureWindow,
-  setAppSwitcherBlur,
-  onScreenshotTaken,
-  onScreenRecordingStatusChanged,
-  enableFullProtection,
-  disableFullProtection,
-};
