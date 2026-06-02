@@ -5,12 +5,12 @@
   "workspaces": {
     "packages": ["example"],
     "nohoist": [
-      "example/react-native",
-      "example/react-native/**",
-      "example/react",
-      "example/react/**",
-      "example/@react-native/**",
-      "example/@react-native-community/**"
+      "**/react-native",
+      "**/react-native/**",
+      "**/react",
+      "**/react/**",
+      "**/@react-native/**",
+      "**/@react-native-community/**"
     ]
   },
   "description": "A high-performance React Native TurboModule providing native screen security, anti-screenshot protection, and seamless background blurring for iOS and Android.",
