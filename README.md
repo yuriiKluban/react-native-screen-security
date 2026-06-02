@@ -1,5 +1,5 @@
 [![CI](https://github.com/yuriiKluban/react-native-screen-security/actions/workflows/ci.yml/badge.svg)](https://github.com/yuriiKluban/react-native-screen-security/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/react-native-screen-security.svg)](https://www.npmjs.com/)
+[![npm version](https://img.shields.io/npm/v/react-native-screen-security.svg)](https://www.npmjs.com/package/react-native-screen-security)
 [![license](https://img.shields.io/npm/l/react-native-screen-security.svg)](https://github.com/yuriikluban/react-native-screen-security/blob/main/LICENSE)
 
 # react-native-screen-security
