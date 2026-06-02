@@ -19,7 +19,6 @@ import {
   SecureView,
   disableFullProtection,
   enableFullProtection,
-  getSecurityState,
   setAppSwitcherBlur,
   useScreenRecordingDetection,
   useScreenSecurity,
@@ -103,22 +102,7 @@ function HomeScreen({ navigation }: { navigation: { navigate: (s: keyof RootStac
           <Text style={styles.menuText}>{item.label}</Text>
         </Pressable>
       ))}
-      <StateFooter />
     </ScreenShell>
-  );
-}
-
-function StateFooter() {
-  const [state, setState] = useState(() => getSecurityState());
-  return (
-    <View style={styles.stateBox}>
-      <Text style={styles.stateTitle}>getSecurityState()</Text>
-      <Text style={styles.mono}>
-        secureWindowActive: {String(state.secureWindowActive)} · appSwitcherBlurActive:{' '}
-        {String(state.appSwitcherBlurActive)}
-      </Text>
-      <Button title="Refresh state" onPress={() => setState(getSecurityState())} />
-    </View>
   );
 }
 
@@ -163,7 +147,6 @@ function GlobalProtectionScreen() {
         useScreenSecurity({'{ protectionLevel: "global" }'}) — entire window is protected.
       </Text>
       <CreditCardWidget />
-      <StateFooter />
     </ScreenShell>
   );
 }
@@ -179,7 +162,6 @@ function ComponentProtectionScreen() {
       <SecureView>
         <CreditCardWidget />
       </SecureView>
-      <StateFooter />
     </ScreenShell>
   );
 }
@@ -197,7 +179,6 @@ function DetectionScreen() {
       <Text style={styles.body}>
         Screen recording: {Platform.OS === 'ios' ? (recording ? 'active' : 'inactive') : 'iOS only'}
       </Text>
-      <StateFooter />
     </ScreenShell>
   );
 }
@@ -229,7 +210,6 @@ function BlurPickerScreen() {
           <Text style={styles.menuText}>blurStyle: {s}</Text>
         </Pressable>
       ))}
-      <StateFooter />
     </ScreenShell>
   );
 }
@@ -246,7 +226,6 @@ function ToggleDemoScreen() {
       <SecureView enabled={viewOn}>
         <CreditCardWidget />
       </SecureView>
-      <StateFooter />
     </ScreenShell>
   );
 }
@@ -257,7 +236,6 @@ function ImperativeScreen() {
       <Button title="enableFullProtection()" onPress={() => enableFullProtection('system')} />
       <Button title="disableFullProtection()" onPress={() => disableFullProtection()} />
       <CreditCardWidget />
-      <StateFooter />
     </ScreenShell>
   );
 }
