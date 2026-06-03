@@ -19,6 +19,7 @@ import {
   SecureView,
   disableFullProtection,
   enableFullProtection,
+  getSecurityState,
   setAppSwitcherBlur,
   useScreenRecordingDetection,
   useScreenSecurity,
@@ -104,6 +105,8 @@ function HomeScreen({
     { label: 'Imperative enable / disable', route: 'Imperative' },
   ];
 
+  const state = getSecurityState();
+
   return (
     <ScreenShell title="react-native-screen-security">
       <Text style={styles.hint}>
@@ -118,6 +121,15 @@ function HomeScreen({
           <Text style={styles.menuText}>{item.label}</Text>
         </Pressable>
       ))}
+      <View style={styles.stateBox}>
+        <Text style={styles.stateTitle}>getSecurityState()</Text>
+        <Text style={styles.mono}>
+          secureWindowActive: {String(state.secureWindowActive)}
+        </Text>
+        <Text style={styles.mono}>
+          appSwitcherBlurActive: {String(state.appSwitcherBlurActive)}
+        </Text>
+      </View>
     </ScreenShell>
   );
 }

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-03
+
+### Added
+
+- Yarn workspace with `example/` app demonstrating hooks, `SecureView`, tabs, detection, blur styles, and imperative APIs
+- `getSecurityState()` — synchronous read of native ref-count state (`secureWindowActive`, `appSwitcherBlurActive`)
+- `SecurityState` and `SecurityToken` types
+- `acquireSecureWindow()` and `acquireAppSwitcherBlur()` — idempotent release tokens for imperative flows
+- `react-native.config.js` for example app autolinking
+
+### Changed
+
+- iOS `ScreenSecurityManager` and Android `SecureWindowController` ref-count / lifecycle hardening
+- Lazy `NativeEventEmitter` initialization (created on first subscription)
+- One-time `__DEV__` warning for `useScreenRecordingDetection` on Android
+- README: monorepo development, example app, new imperative APIs, migration notes for 1.2.0
+- Example `tsconfig` paths resolve library types from `src/` during local development
+
+### Removed
+
+- Default export object from the package entry — use named imports (`import { setSecureWindow } from '...'`)
+
+### Fixed
+
+- Secure window anchor / Fabric component codegen file naming (`SecureWindowAnchorNativeComponent`)
+
 ## [1.1.1] - 2026-05-31
 
 ### Added

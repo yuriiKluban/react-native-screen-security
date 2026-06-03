@@ -106,15 +106,36 @@ yarn android
 
 ### Local / monorepo setup
 
+**Yarn workspace (this repo):**
+
+```json
+{
+  "workspaces": { "packages": ["example"] },
+  "dependencies": {
+    "react-native-screen-security": "*"
+  }
+}
+```
+
+From the repo root: `yarn install` → `yarn workspace screen-security-example pods` (iOS) → `yarn workspace screen-security-example ios` / `android`.
+
+**File dependency in another app:**
+
 ```json
 {
   "dependencies": {
-    "react-native-screen-security": "file:./modules/react-native-screen-security"
+    "react-native-screen-security": "file:../react-native-screen-security"
   }
 }
 ```
 
 Then: `yarn install` → `cd ios && pod install` → rebuild.
+
+> **TypeScript in monorepos:** the published `types` field points at `lib/index.d.ts`, which is generated and gitignored. After cloning, run `yarn build` at the library root, or map the example app to source (see `example/tsconfig.json` `paths`). Metro already bundles `src/index.ts` via the package `"react-native"` field.
+
+### Example app
+
+The [`example/`](example/) app exercises every API (tabs, global/component protection, detection, blur, toggles, imperative calls, `getSecurityState`). Use it for manual QA when changing native code.
 
 ---
 
@@ -343,6 +364,8 @@ import {
   setAppSwitcherBlur,
   enableFullProtection,
   disableFullProtection,
+  getSecurityState,
+  acquireSecureWindow,
   onScreenshotTaken,
 } from 'react-native-screen-security';
 
@@ -357,6 +380,13 @@ setSecureWindow(true); // block capture/screenshots
 setAppSwitcherBlur(true, 'dark'); // iOS only — blur in app switcher
 setSecureWindow(false);
 setAppSwitcherBlur(false, 'system');
+
+// Sync native ref-count state (debug / settings UI)
+const { secureWindowActive, appSwitcherBlurActive } = getSecurityState();
+
+// Token-style release (services, navigation guards)
+const token = acquireSecureWindow();
+token.release();
 ```
 
 | Function                          | When to use                                                   |
@@ -365,6 +395,9 @@ setAppSwitcherBlur(false, 'system');
 | `SecureView`                      | Wrap sensitive UI — required for Android component protection |
 | `enableFullProtection()`          | App-wide — call in `useEffect` or after auth                  |
 | `setSecureWindow(true/false)`     | Fine-grained global window control                            |
+| `getSecurityState()`              | Read whether secure window / app-switcher blur refs are active |
+| `acquireSecureWindow()`           | Imperative global protection with `release()`                 |
+| `acquireAppSwitcherBlur()`        | iOS app-switcher blur with `release()`                        |
 | `useScreenshotDetection(cb)`      | React component — react to screenshots                        |
 | `useScreenRecordingDetection(cb)` | iOS only — screen recording status                            |
 | `onScreenshotTaken(cb)`           | Non-React code — returns subscription to `.remove()`          |
@@ -413,6 +446,9 @@ Android-only invisible anchor that binds `FLAG_SECURE` to the hosting native Fra
 | -------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------- |
 | `setSecureWindow`                | `(enable: boolean) => void`                                                   | Ref-count +1/−1 for global secure window  |
 | `setAppSwitcherBlur`             | `(enable: boolean, style?: BlurStyle) => void`                                | Ref-count +1/−1 for iOS app switcher blur |
+| `getSecurityState`               | `() => SecurityState`                                                         | Sync snapshot of native ref-count flags   |
+| `acquireSecureWindow`            | `() => SecurityToken`                                                         | Enable global window; call `release()`    |
+| `acquireAppSwitcherBlur`         | `(style?: BlurStyle) => SecurityToken`                                        | iOS blur token with `release()`           |
 | `enableFullProtection`           | `(blurStyle?: BlurStyle) => void`                                             | Secure window + iOS blur                  |
 | `disableFullProtection`          | `() => void`                                                                  | Disable all protection                    |
 | `onScreenshotTaken`              | `(callback: () => void) => EmitterSubscription`                               | Subscribe to screenshot events            |
@@ -426,6 +462,13 @@ type ProtectionLevel = 'component' | 'global';
 
 type ScreenRecordingEvent = { isCaptured: boolean };
 type ScreenshotEvent = Record<string, never>;
+
+type SecurityState = {
+  secureWindowActive: boolean;
+  appSwitcherBlurActive: boolean;
+};
+
+type SecurityToken = { release: () => void };
 
 interface ScreenSecurityOptions {
   protectionLevel?: ProtectionLevel;
@@ -475,6 +518,14 @@ yarn test
 
 Hook ref-count behavior and event payloads are covered with a mocked native module (no device required).
 
+### Example app (manual)
+
+```bash
+yarn install
+yarn workspace screen-security-example pods   # iOS, first time / native dep changes
+yarn workspace screen-security-example ios    # or android
+```
+
 ### Manual device testing
 
 | Feature                | iOS Simulator | iOS Device | Android Emulator |
@@ -513,6 +564,12 @@ adb shell input keyevent 120
 **Events not received** — subscribe before taking a screenshot. The native observer starts when the first listener is added.
 
 ## Migration
+
+### 1.1.x → 1.2.0
+
+- **Default export removed** — use named imports only, e.g. `import { enableFullProtection } from 'react-native-screen-security'`
+- **New (optional):** `getSecurityState()`, `acquireSecureWindow()`, `acquireAppSwitcherBlur()`
+- Monorepo consumers: run `yarn build` at the library root after clone so `lib/index.d.ts` exists, or point TypeScript at `src/index.ts` (see `example/tsconfig.json`)
 
 ### 1.0.x → 1.1.0
 
