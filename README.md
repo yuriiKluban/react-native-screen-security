@@ -122,13 +122,13 @@ Then: `yarn install` → `cd ios && pod install` → rebuild.
 
 Use this decision tree to pick the right integration:
 
-| Your goal | Use |
-| --------- | --- |
-| Protect one screen in a tab navigator (Android) | `<SecureView>` (or `<SecureWindowAnchor />` at screen root) |
-| GPU-blank a region on iOS + app-switcher blur | `useScreenSecurity()` + `<SecureView>` around sensitive content |
-| Protect the entire app after login | `useScreenSecurity({ protectionLevel: 'global' })` at app root |
-| Fragment-scoped Android protection without wrapping UI | `<SecureWindowAnchor />` |
-| Toggle protection from settings | `useScreenSecurity({ enabled: isOn })` or imperative API (see ref-count note below) |
+| Your goal                                              | Use                                                                                 |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Protect one screen in a tab navigator (Android)        | `<SecureView>` (or `<SecureWindowAnchor />` at screen root)                         |
+| GPU-blank a region on iOS + app-switcher blur          | `useScreenSecurity()` + `<SecureView>` around sensitive content                     |
+| Protect the entire app after login                     | `useScreenSecurity({ protectionLevel: 'global' })` at app root                      |
+| Fragment-scoped Android protection without wrapping UI | `<SecureWindowAnchor />`                                                            |
+| Toggle protection from settings                        | `useScreenSecurity({ enabled: isOn })` or imperative API (see ref-count note below) |
 
 **Android tabs:** component-level protection works best with [`react-native-screens`](https://github.com/software-mansion/react-native-screens) native fragments. The library binds `FLAG_SECURE` to Fragment resume/pause — no hard peer dependency, but tabs without native screen fragments may not behave correctly.
 
@@ -396,10 +396,10 @@ Subscribes to `onScreenRecordingStatusChanged`. **iOS only.**
 
 Cross-platform container for sensitive content. Required on Android for component-level `FLAG_SECURE` (including tab navigators). On iOS, only wrapped regions are GPU-blanked during capture — see [See it in action](#see-it-in-action).
 
-| Prop | Type | Default | Description |
-| ---- | ---- | ------- | ----------- |
-| `fill` | `boolean` | `false` | When `true`, applies `flex: 1` (pre-1.1.0 / 1.0.x default behavior) |
-| `enabled` | `boolean` | `true` | When `false`, renders a plain `View` without native protection |
+| Prop      | Type      | Default | Description                                                         |
+| --------- | --------- | ------- | ------------------------------------------------------------------- |
+| `fill`    | `boolean` | `false` | When `true`, applies `flex: 1` (pre-1.1.0 / 1.0.x default behavior) |
+| `enabled` | `boolean` | `true`  | When `false`, renders a plain `View` without native protection      |
 
 Does not apply `flex: 1` by default — pass `fill` or `style={{ flex: 1 }}` for full-screen wrappers.
 
@@ -409,14 +409,14 @@ Android-only invisible anchor that binds `FLAG_SECURE` to the hosting native Fra
 
 ### Functions
 
-| Function                | Signature                                       | Description                    |
-| ----------------------- | ----------------------------------------------- | ------------------------------ |
-| `setSecureWindow`       | `(enable: boolean) => void`                     | Ref-count +1/−1 for global secure window |
-| `setAppSwitcherBlur`    | `(enable: boolean, style?: BlurStyle) => void`  | Ref-count +1/−1 for iOS app switcher blur |
-| `enableFullProtection`  | `(blurStyle?: BlurStyle) => void`               | Secure window + iOS blur       |
-| `disableFullProtection` | `() => void`                                    | Disable all protection         |
-| `onScreenshotTaken`     | `(callback: () => void) => EmitterSubscription` | Subscribe to screenshot events |
-| `onScreenRecordingStatusChanged` | `(callback: (event: { isCaptured: boolean }) => void) => EmitterSubscription` | Subscribe to recording status (iOS only) |
+| Function                         | Signature                                                                     | Description                               |
+| -------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------- |
+| `setSecureWindow`                | `(enable: boolean) => void`                                                   | Ref-count +1/−1 for global secure window  |
+| `setAppSwitcherBlur`             | `(enable: boolean, style?: BlurStyle) => void`                                | Ref-count +1/−1 for iOS app switcher blur |
+| `enableFullProtection`           | `(blurStyle?: BlurStyle) => void`                                             | Secure window + iOS blur                  |
+| `disableFullProtection`          | `() => void`                                                                  | Disable all protection                    |
+| `onScreenshotTaken`              | `(callback: () => void) => EmitterSubscription`                               | Subscribe to screenshot events            |
+| `onScreenRecordingStatusChanged` | `(callback: (event: { isCaptured: boolean }) => void) => EmitterSubscription` | Subscribe to recording status (iOS only)  |
 
 ### Types
 
@@ -446,14 +446,14 @@ interface ScreenSecurityOptions {
 
 ## Platform behavior
 
-| Feature                                            | iOS                                            | Android                                                         |
-| -------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
-| `SecureView` + `component` mode                    | GPU-blanks wrapped content during capture      | `FLAG_SECURE` while hosting Fragment is resumed (tab-safe)      |
-| `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur (ref-counted) | Window `FLAG_SECURE` (ref-counted)                              |
-| `setSecureWindow(true)`                            | Content renders black during recording/capture | Blocks screenshots, recording, and recents preview — see [See it in action](#see-it-in-action) |
-| `setAppSwitcherBlur`                               | Blur overlay in app switcher                   | No-op (`FLAG_SECURE` already masks recents) — see [App switcher privacy](#app-switcher-privacy) |
-| Screenshot detection                               | `userDidTakeScreenshot` + screen capture       | `ScreenCaptureCallback` (API 34+) or `ContentObserver` fallback |
-| Screen recording detection                         | `UIScreen.capturedDidChangeNotification`       | Not available                                                   |
+| Feature                                            | iOS                                               | Android                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `SecureView` + `component` mode                    | GPU-blanks wrapped content during capture         | `FLAG_SECURE` while hosting Fragment is resumed (tab-safe)                                      |
+| `useScreenSecurity({ protectionLevel: 'global' })` | Window secure layer + optional blur (ref-counted) | Window `FLAG_SECURE` (ref-counted)                                                              |
+| `setSecureWindow(true)`                            | Content renders black during recording/capture    | Blocks screenshots, recording, and recents preview — see [See it in action](#see-it-in-action)  |
+| `setAppSwitcherBlur`                               | Blur overlay in app switcher                      | No-op (`FLAG_SECURE` already masks recents) — see [App switcher privacy](#app-switcher-privacy) |
+| Screenshot detection                               | `userDidTakeScreenshot` + screen capture          | `ScreenCaptureCallback` (API 34+) or `ContentObserver` fallback                                 |
+| Screen recording detection                         | `UIScreen.capturedDidChangeNotification`          | Not available                                                                                   |
 
 ---
 

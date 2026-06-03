@@ -1,4 +1,5 @@
-export const SecureView = ({ children }: { children?: React.ReactNode }) => children;
+export const SecureView = ({ children }: { children?: React.ReactNode }) =>
+  children;
 
 export function useScreenSecurity(): void {}
 export function useScreenshotDetection(): void {}

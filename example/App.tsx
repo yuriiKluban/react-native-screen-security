@@ -48,7 +48,12 @@ const cardStyles = StyleSheet.create({
     padding: 20,
     marginVertical: 12,
   },
-  pan: { color: '#f6e05e', fontSize: 18, letterSpacing: 2, fontFamily: 'monospace' },
+  pan: {
+    color: '#f6e05e',
+    fontSize: 18,
+    letterSpacing: 2,
+    fontFamily: 'monospace',
+  },
   label: { color: '#90cdf4', fontSize: 12, marginBottom: 8 },
 });
 
@@ -57,7 +62,9 @@ function CreditCardWidget() {
     <View style={cardStyles.card}>
       <Text style={cardStyles.label}>Sensitive (wrapped in SecureView)</Text>
       <Text style={cardStyles.pan}>4111 1111 1111 4242</Text>
-      <Text style={{ color: '#bee3f8', marginTop: 8 }}>Exp 12/28 · CVV ***</Text>
+      <Text style={{ color: '#bee3f8', marginTop: 8 }}>
+        Exp 12/28 · CVV ***
+      </Text>
     </View>
   );
 }
@@ -72,15 +79,24 @@ function ScreenShell({
   return (
     <SafeAreaView style={styles.screen} edges={['bottom']}>
       <Text style={styles.screenTitle}>{title}</Text>
-      <ScrollView contentContainerStyle={styles.scrollContent}>{children}</ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {children}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-function HomeScreen({ navigation }: { navigation: { navigate: (s: keyof RootStackParamList) => void } }) {
+function HomeScreen({
+  navigation,
+}: {
+  navigation: { navigate: (s: keyof RootStackParamList) => void };
+}) {
   const items: { label: string; route: keyof RootStackParamList }[] = [
     { label: 'Tab navigator (fragment-scoped)', route: 'TabsDemo' },
-    { label: 'Global protection (useScreenSecurity)', route: 'GlobalProtection' },
+    {
+      label: 'Global protection (useScreenSecurity)',
+      route: 'GlobalProtection',
+    },
     { label: 'Component SecureView', route: 'ComponentProtection' },
     { label: 'Screenshot / recording detection', route: 'Detection' },
     { label: 'App-switcher blur styles', route: 'BlurPicker' },
@@ -121,7 +137,9 @@ function TabsDemoScreen() {
 function PublicTab() {
   return (
     <View style={styles.tabBody}>
-      <Text style={styles.body}>No SecureView — screenshots allowed on Android.</Text>
+      <Text style={styles.body}>
+        No SecureView — screenshots allowed on Android.
+      </Text>
       <CreditCardWidget />
     </View>
   );
@@ -132,7 +150,8 @@ function SecuredTab() {
   return (
     <SecureView fill style={styles.tabBody}>
       <Text style={styles.body}>
-        SecureView + component hook. Switch to Public tab to clear FLAG_SECURE on Android.
+        SecureView + component hook. Switch to Public tab to clear FLAG_SECURE
+        on Android.
       </Text>
       <CreditCardWidget />
     </SecureView>
@@ -140,11 +159,16 @@ function SecuredTab() {
 }
 
 function GlobalProtectionScreen() {
-  useScreenSecurity({ protectionLevel: 'global', blur: true, blurStyle: 'dark' });
+  useScreenSecurity({
+    protectionLevel: 'global',
+    blur: true,
+    blurStyle: 'dark',
+  });
   return (
     <ScreenShell title="Global protection">
       <Text style={styles.body}>
-        useScreenSecurity({'{ protectionLevel: "global" }'}) — entire window is protected.
+        useScreenSecurity({'{ protectionLevel: "global" }'}) — entire window is
+        protected.
       </Text>
       <CreditCardWidget />
     </ScreenShell>
@@ -157,7 +181,9 @@ function ComponentProtectionScreen() {
     <ScreenShell title="Component SecureView">
       <Text style={styles.body}>Only the card below is inside SecureView.</Text>
       <View style={[cardStyles.card, { backgroundColor: '#2d3748' }]}>
-        <Text style={styles.body}>Public chrome — not blanked on iOS component mode.</Text>
+        <Text style={styles.body}>
+          Public chrome — not blanked on iOS component mode.
+        </Text>
       </View>
       <SecureView>
         <CreditCardWidget />
@@ -177,7 +203,12 @@ function DetectionScreen() {
     <ScreenShell title="Detection hooks">
       <Text style={styles.body}>Screenshots taken this session: {shots}</Text>
       <Text style={styles.body}>
-        Screen recording: {Platform.OS === 'ios' ? (recording ? 'active' : 'inactive') : 'iOS only'}
+        Screen recording:{' '}
+        {Platform.OS === 'ios'
+          ? recording
+            ? 'active'
+            : 'inactive'
+          : 'iOS only'}
       </Text>
     </ScreenShell>
   );
@@ -187,7 +218,11 @@ const BLUR_STYLES: BlurStyle[] = ['light', 'dark', 'system', 'extraLight'];
 
 function BlurPickerScreen() {
   const [style, setStyle] = useState<BlurStyle>('system');
-  useScreenSecurity({ protectionLevel: 'global', blur: true, blurStyle: style });
+  useScreenSecurity({
+    protectionLevel: 'global',
+    blur: true,
+    blurStyle: style,
+  });
 
   return (
     <ScreenShell title="App-switcher blur">
@@ -221,8 +256,14 @@ function ToggleDemoScreen() {
 
   return (
     <ScreenShell title="enabled toggles">
-      <Button title={`Hook enabled: ${hookOn}`} onPress={() => setHookOn(v => !v)} />
-      <Button title={`SecureView enabled: ${viewOn}`} onPress={() => setViewOn(v => !v)} />
+      <Button
+        title={`Hook enabled: ${hookOn}`}
+        onPress={() => setHookOn(v => !v)}
+      />
+      <Button
+        title={`SecureView enabled: ${viewOn}`}
+        onPress={() => setViewOn(v => !v)}
+      />
       <SecureView enabled={viewOn}>
         <CreditCardWidget />
       </SecureView>
@@ -233,8 +274,14 @@ function ToggleDemoScreen() {
 function ImperativeScreen() {
   return (
     <ScreenShell title="Imperative API">
-      <Button title="enableFullProtection()" onPress={() => enableFullProtection('system')} />
-      <Button title="disableFullProtection()" onPress={() => disableFullProtection()} />
+      <Button
+        title="enableFullProtection()"
+        onPress={() => enableFullProtection('system')}
+      />
+      <Button
+        title="disableFullProtection()"
+        onPress={() => disableFullProtection()}
+      />
       <CreditCardWidget />
     </ScreenShell>
   );
@@ -252,10 +299,24 @@ function App() {
             contentStyle: { backgroundColor: '#171923' },
           }}
         >
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Screen Security' }} />
-          <Stack.Screen name="TabsDemo" component={TabsDemoScreen} options={{ title: 'Tabs' }} />
-          <Stack.Screen name="GlobalProtection" component={GlobalProtectionScreen} />
-          <Stack.Screen name="ComponentProtection" component={ComponentProtectionScreen} />
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ title: 'Screen Security' }}
+          />
+          <Stack.Screen
+            name="TabsDemo"
+            component={TabsDemoScreen}
+            options={{ title: 'Tabs' }}
+          />
+          <Stack.Screen
+            name="GlobalProtection"
+            component={GlobalProtectionScreen}
+          />
+          <Stack.Screen
+            name="ComponentProtection"
+            component={ComponentProtectionScreen}
+          />
           <Stack.Screen name="Detection" component={DetectionScreen} />
           <Stack.Screen name="BlurPicker" component={BlurPickerScreen} />
           <Stack.Screen name="ToggleDemo" component={ToggleDemoScreen} />
@@ -294,7 +355,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   stateTitle: { color: '#90cdf4', marginBottom: 8 },
-  mono: { color: '#e2e8f0', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 12 },
+  mono: {
+    color: '#e2e8f0',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 12,
+  },
 });
 
 export default App;
