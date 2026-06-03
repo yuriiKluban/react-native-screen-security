@@ -20,6 +20,11 @@ RCT_EXPORT_MODULE(RTNScreenSecurity)
         _manager = [ScreenSecurityManager new];
         _hasListeners = NO;
 
+        UIWindow *hostWindow = [self resolveHostWindow];
+        if (hostWindow != nil) {
+            [_manager attachToWindow:hostWindow];
+        }
+
         __weak RTNScreenSecurity *weakSelf = self;
         _manager.onScreenshotTaken = ^{
             RTNScreenSecurity *strongSelf = weakSelf;
@@ -39,7 +44,30 @@ RCT_EXPORT_MODULE(RTNScreenSecurity)
 }
 
 + (BOOL)requiresMainQueueSetup {
-    return NO;
+    return YES;
+}
+
+- (UIWindow *)resolveHostWindow {
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+            if (scene.activationState != UISceneActivationStateForegroundActive) {
+                continue;
+            }
+            if (![scene isKindOfClass:[UIWindowScene class]]) {
+                continue;
+            }
+            UIWindowScene *windowScene = (UIWindowScene *)scene;
+            for (UIWindow *window in windowScene.windows) {
+                if (window.isKeyWindow) {
+                    return window;
+                }
+            }
+        }
+    }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    return UIApplication.sharedApplication.keyWindow;
+#pragma clang diagnostic pop
 }
 
 - (NSArray<NSString *> *)supportedEvents {
@@ -64,6 +92,13 @@ RCT_EXPORT_METHOD(setSecureWindow:(BOOL)enable) {
 
 RCT_EXPORT_METHOD(setAppSwitcherBlur:(BOOL)enable style:(NSString *)style) {
     [self.manager setAppSwitcherBlur:enable style:style];
+}
+
+RCT_EXPORT_SYNCHRONOUS_TYPED_METHOD(NSDictionary *, getSecurityState) {
+    return @{
+        @"secureWindowActive": @(self.manager.secureWindowActive),
+        @"appSwitcherBlurActive": @(self.manager.appSwitcherBlurActive),
+    };
 }
 
 RCT_EXPORT_METHOD(addListener:(NSString *)eventName) {

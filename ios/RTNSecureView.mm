@@ -1,6 +1,11 @@
 #ifdef RCT_NEW_ARCH_ENABLED
 
 #import "RTNSecureView.h"
+#if __has_include(<react_native_screen_security/react_native_screen_security-Swift.h>)
+#import <react_native_screen_security/react_native_screen_security-Swift.h>
+#else
+#import "react_native_screen_security-Swift.h"
+#endif
 
 #import <react/renderer/components/RTNScreenSecuritySpec/ComponentDescriptors.h>
 #import <react/renderer/components/RTNScreenSecuritySpec/EventEmitters.h>
@@ -34,31 +39,11 @@ using namespace facebook::react;
 
 - (void)_setupSecureContainer
 {
-    UITextField *field = [[UITextField alloc] initWithFrame:self.bounds];
-
-    // GPU-level protection: the internal canvas layer is blanked during capture
-    field.secureTextEntry = YES;
-
-    // Mitigation #3 — prevent keyboard trigger
-    field.enabled = NO;
-
-    // Mitigation #1 — prevent touch interception by the text field
-    field.userInteractionEnabled = NO;
-
-    // Mitigation #4 — prevent visual artifacts (white bg, borders)
-    field.backgroundColor = [UIColor clearColor];
-    field.borderStyle = UITextBorderStyleNone;
-    field.textColor = [UIColor clearColor];
-    field.tintColor = [UIColor clearColor];
-    field.opaque = NO;
-
-    field.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-
+    UITextField *field = [SecureCanvasFactory makeSecureTextFieldWithFrame:self.bounds];
     [self addSubview:field];
     [field layoutIfNeeded];
 
-    // Extract the GPU-protected canvas (_UITextFieldCanvasView)
-    UIView *canvas = field.subviews.firstObject;
+    UIView *canvas = [SecureCanvasFactory canvasViewFrom:field];
     if (canvas) {
         canvas.userInteractionEnabled = YES;
         canvas.backgroundColor = [UIColor clearColor];
@@ -70,7 +55,7 @@ using namespace facebook::react;
     _secureContainer = canvas;
 }
 
-#pragma mark - Layout (Mitigation #2)
+#pragma mark - Layout
 
 - (void)layoutSubviews
 {
@@ -101,7 +86,7 @@ using namespace facebook::react;
     [childComponentView removeFromSuperview];
 }
 
-#pragma mark - Touch Passthrough (Mitigation #1)
+#pragma mark - Touch Passthrough
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
 {
@@ -113,7 +98,6 @@ using namespace facebook::react;
         return nil;
     }
 
-    // Bypass the disabled UITextField — route touches directly to RN children
     if (_secureContainer) {
         CGPoint containerPoint = [_secureContainer convertPoint:point fromView:self];
         NSArray<UIView *> *children = _secureContainer.subviews;

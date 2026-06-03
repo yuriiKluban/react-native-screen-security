@@ -5,10 +5,10 @@ import UIKit
     @objc public var onScreenshotTaken: (() -> Void)?
     @objc public var onScreenRecordingStatusChanged: ((_ isCaptured: Bool) -> Void)?
 
+    private weak var hostWindow: UIWindow?
     private var secureTextField: UITextField?
     private var blurView: UIVisualEffectView?
     private var screenCaptureOverlay: UIVisualEffectView?
-    private var screenshotOverlay: UIVisualEffectView?
     private var currentBlurStyle: String = "system"
     private var isBlurEnabled = false
     private var isSecureEnabled = false
@@ -16,10 +16,19 @@ import UIKit
     private var blurRefCount = 0
     private var screenCaptureObservation: NSObjectProtocol?
     private var screenCaptureProtectionObservation: NSObjectProtocol?
-    private var screenshotProtectionObservation: NSObjectProtocol?
+    private var sceneActivationObservation: NSObjectProtocol?
+    private var secureLayer: CALayer?
+    private var boundsObservation: NSKeyValueObservation?
 
     @objc public override init() {
         super.init()
+        registerSceneActivationObserver()
+    }
+
+    deinit {
+        if let observation = sceneActivationObservation {
+            NotificationCenter.default.removeObserver(observation)
+        }
     }
 
     // MARK: - Public State
@@ -32,10 +41,17 @@ import UIKit
         return isBlurEnabled
     }
 
+    @objc public func attachToWindow(_ window: UIWindow) {
+        hostWindow = window
+        if isSecureEnabled {
+            restartBoundsObservation()
+        }
+    }
+
     // MARK: - Secure Window
 
     @objc public func setSecureWindow(_ enable: Bool) {
-        DispatchQueue.main.async { [weak self] in
+        let work = { [weak self] in
             guard let self = self else { return }
 
             if enable {
@@ -44,7 +60,6 @@ import UIKit
                 self.isSecureEnabled = true
                 self.enableSecureLayer()
                 self.startScreenCaptureProtection()
-                self.startScreenshotProtection()
             } else {
                 guard self.secureWindowRefCount > 0 else { return }
                 self.secureWindowRefCount -= 1
@@ -52,28 +67,29 @@ import UIKit
                 self.isSecureEnabled = false
                 self.disableSecureLayer()
                 self.stopScreenCaptureProtection()
-                self.stopScreenshotProtection()
             }
+        }
+
+        if Thread.isMainThread {
+            work()
+        } else if enable {
+            DispatchQueue.main.sync(execute: work)
+        } else {
+            DispatchQueue.main.async(execute: work)
         }
     }
 
-    private var secureLayer: CALayer?
-
     private func enableSecureLayer() {
         guard secureTextField == nil else { return }
-        guard let window = Self.keyWindow,
+        guard let window = resolvedWindow,
               let parentLayer = window.layer.superlayer else { return }
 
-        let field = UITextField()
-        field.isSecureTextEntry = true
-        field.isUserInteractionEnabled = false
-        field.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let field = SecureCanvasFactory.makeSecureTextField(
+            frame: CGRect(x: 0, y: 0, width: 1, height: 1)
+        )
+        SecureCanvasFactory.primeLayout(for: field, in: window)
 
-        window.addSubview(field)
-        field.layoutIfNeeded()
-        field.removeFromSuperview()
-
-        guard let containerLayer = field.layer.sublayers?.first else {
+        guard let containerLayer = SecureCanvasFactory.canvasLayer(from: field) else {
             return
         }
 
@@ -83,47 +99,47 @@ import UIKit
         parentLayer.addSublayer(containerLayer)
         containerLayer.addSublayer(window.layer)
 
-        self.secureTextField = field
-        self.secureLayer = containerLayer
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleBoundsChange),
-            name: UIDevice.orientationDidChangeNotification,
-            object: nil
-        )
+        secureTextField = field
+        secureLayer = containerLayer
+        startBoundsObservation()
     }
 
     private func disableSecureLayer() {
-        NotificationCenter.default.removeObserver(
-            self,
-            name: UIDevice.orientationDidChangeNotification,
-            object: nil
-        )
-
-        guard let window = Self.keyWindow,
-              let containerLayer = secureLayer,
-              let parentLayer = containerLayer.superlayer else {
-            secureLayer = nil
-            secureTextField = nil
-            return
+        if let window = resolvedWindow, let containerLayer = secureLayer {
+            if let parentLayer = containerLayer.superlayer {
+                parentLayer.addSublayer(window.layer)
+            }
+            containerLayer.removeFromSuperlayer()
         }
 
-        parentLayer.addSublayer(window.layer)
-        containerLayer.removeFromSuperlayer()
-
+        stopBoundsObservation()
         secureLayer = nil
         secureTextField = nil
     }
 
-    @objc private func handleBoundsChange() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self,
-                  let window = Self.keyWindow,
-                  let containerLayer = self.secureLayer else { return }
-            containerLayer.frame = window.bounds
-            containerLayer.sublayers?.forEach { $0.frame = window.bounds }
+    private func startBoundsObservation() {
+        stopBoundsObservation()
+        guard let window = resolvedWindow else { return }
+        boundsObservation = window.observe(\.bounds, options: [.new]) { [weak self] window, _ in
+            DispatchQueue.main.async {
+                self?.updateLayerFrames(for: window)
+            }
         }
+    }
+
+    private func restartBoundsObservation() {
+        guard isSecureEnabled else { return }
+        startBoundsObservation()
+    }
+
+    private func stopBoundsObservation() {
+        boundsObservation = nil
+    }
+
+    private func updateLayerFrames(for window: UIWindow) {
+        guard let containerLayer = secureLayer else { return }
+        containerLayer.frame = window.bounds
+        containerLayer.sublayers?.forEach { $0.frame = window.bounds }
     }
 
     // MARK: - Screen Capture Protection (fallback overlay during recording)
@@ -157,13 +173,13 @@ import UIKit
     }
 
     private func addScreenCaptureOverlay() {
-        guard screenCaptureOverlay == nil, let window = Self.keyWindow else { return }
+        guard screenCaptureOverlay == nil, let window = resolvedWindow else { return }
         let effect = UIBlurEffect(style: .systemThickMaterial)
         let view = UIVisualEffectView(effect: effect)
         view.frame = window.bounds
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         window.addSubview(view)
-        self.screenCaptureOverlay = view
+        screenCaptureOverlay = view
     }
 
     private func removeScreenCaptureOverlay() {
@@ -171,51 +187,10 @@ import UIKit
         screenCaptureOverlay = nil
     }
 
-    // MARK: - Screenshot Protection (overlay before screenshot capture)
-
-    private func startScreenshotProtection() {
-        guard screenshotProtectionObservation == nil else { return }
-        screenshotProtectionObservation = NotificationCenter.default.addObserver(
-            forName: UIApplication.userDidTakeScreenshotNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self, self.isSecureEnabled else { return }
-            self.flashScreenshotOverlay()
-        }
-    }
-
-    private func stopScreenshotProtection() {
-        if let observation = screenshotProtectionObservation {
-            NotificationCenter.default.removeObserver(observation)
-            screenshotProtectionObservation = nil
-        }
-        removeScreenshotOverlay()
-    }
-
-    private func flashScreenshotOverlay() {
-        guard screenshotOverlay == nil, let window = Self.keyWindow else { return }
-        let effect = UIBlurEffect(style: .systemThickMaterial)
-        let view = UIVisualEffectView(effect: effect)
-        view.frame = window.bounds
-        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        window.addSubview(view)
-        self.screenshotOverlay = view
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.removeScreenshotOverlay()
-        }
-    }
-
-    private func removeScreenshotOverlay() {
-        screenshotOverlay?.removeFromSuperview()
-        screenshotOverlay = nil
-    }
-
     // MARK: - App Switcher Blur
 
     @objc public func setAppSwitcherBlur(_ enable: Bool, style: String) {
-        DispatchQueue.main.async { [weak self] in
+        let work = { [weak self] in
             guard let self = self else { return }
 
             if enable {
@@ -238,12 +213,19 @@ import UIKit
                 self.removeBlurOverlay()
             }
         }
+
+        if Thread.isMainThread {
+            work()
+        } else if enable {
+            DispatchQueue.main.sync(execute: work)
+        } else {
+            DispatchQueue.main.async(execute: work)
+        }
     }
 
     private func updateBlurStyleIfVisible() {
         guard let view = blurView else { return }
-        let newEffect = UIBlurEffect(style: blurEffectStyle(for: currentBlurStyle))
-        view.effect = newEffect
+        view.effect = UIBlurEffect(style: blurEffectStyle(for: currentBlurStyle))
     }
 
     private func registerBlurObservers() {
@@ -287,14 +269,14 @@ import UIKit
     }
 
     private func addBlurOverlay() {
-        guard blurView == nil, let window = Self.keyWindow else { return }
+        guard blurView == nil, let window = resolvedWindow else { return }
 
         let effect = UIBlurEffect(style: blurEffectStyle(for: currentBlurStyle))
         let view = UIVisualEffectView(effect: effect)
         view.frame = window.bounds
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         window.addSubview(view)
-        self.blurView = view
+        blurView = view
     }
 
     private func removeBlurOverlay() {
@@ -366,7 +348,7 @@ import UIKit
     // MARK: - Cleanup
 
     @objc public func invalidate() {
-        DispatchQueue.main.async { [weak self] in
+        let work = { [weak self] in
             guard let self = self else { return }
             self.secureWindowRefCount = 0
             self.blurRefCount = 0
@@ -374,19 +356,46 @@ import UIKit
             self.isBlurEnabled = false
             self.disableSecureLayer()
             self.stopScreenCaptureProtection()
-            self.stopScreenshotProtection()
             self.removeBlurOverlay()
             self.unregisterBlurObservers()
             self.stopScreenshotObserver()
             self.onScreenshotTaken = nil
             self.onScreenRecordingStatusChanged = nil
         }
+
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.sync(execute: work)
+        }
     }
 
-    // MARK: - Helpers
+    // MARK: - Scene / Window Resolution
 
-    private static var keyWindow: UIWindow? {
-        return UIApplication.shared.connectedScenes
+    private func registerSceneActivationObserver() {
+        sceneActivationObservation = NotificationCenter.default.addObserver(
+            forName: UIScene.didActivateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let scene = notification.object as? UIWindowScene,
+                  let window = scene.windows.first(where: { $0.isKeyWindow }) else { return }
+            self.hostWindow = window
+            self.restartBoundsObservation()
+        }
+    }
+
+    private var resolvedWindow: UIWindow? {
+        if let host = hostWindow, host.windowScene != nil {
+            return host
+        }
+        return Self.foregroundKeyWindow()
+    }
+
+    private static func foregroundKeyWindow() -> UIWindow? {
+        UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
             .compactMap { $0 as? UIWindowScene }
             .flatMap { $0.windows }
             .first(where: { $0.isKeyWindow })

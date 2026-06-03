@@ -6,8 +6,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import android.provider.MediaStore
-import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -29,20 +30,14 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
     private var listenerCount = 0
     private var screenshotObserver: ContentObserver? = null
     private var screenCaptureCallback: Any? = null
+    private var screenCaptureActivity: Activity? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         SecureWindowController.initialize(reactContext)
-
-        reactContext.addLifecycleEventListener(object : LifecycleEventListener {
-            override fun onHostResume() {
-                SecureWindowController.onHostResume()
-            }
-
-            override fun onHostPause() {}
-
-            override fun onHostDestroy() {}
-        })
+        SecureWindowController.activityResumedHandler = { activity ->
+            reRegisterScreenCaptureCallback(activity)
+        }
     }
 
     override fun getName(): String = NAME
@@ -58,6 +53,27 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
 
     override fun setAppSwitcherBlur(enable: Boolean, style: String) {
         // FLAG_SECURE handles app-switcher masking on Android automatically.
+    }
+
+    override fun getSecurityState(): WritableNativeMap {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return buildSecurityState()
+        }
+        val latch = CountDownLatch(1)
+        var result: WritableNativeMap? = null
+        mainHandler.post {
+            result = buildSecurityState()
+            latch.countDown()
+        }
+        latch.await(500, TimeUnit.MILLISECONDS)
+        return result ?: buildSecurityState()
+    }
+
+    private fun buildSecurityState(): WritableNativeMap {
+        val map = WritableNativeMap()
+        map.putBoolean("secureWindowActive", SecureWindowController.isSecureWindowActive())
+        map.putBoolean("appSwitcherBlurActive", false)
+        return map
     }
 
     override fun addListener(eventName: String) {
@@ -76,9 +92,10 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
 
     private fun registerScreenshotObserver() {
         if (Build.VERSION.SDK_INT >= 34) {
-            registerScreenCaptureCallback()
+            registerScreenCaptureCallbackOn(reactContext.currentActivity)
+        } else {
+            registerContentObserver()
         }
-        registerContentObserver()
     }
 
     private fun unregisterScreenshotObserver() {
@@ -89,9 +106,18 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
     }
 
     @Suppress("NewApi")
-    private fun registerScreenCaptureCallback() {
-        if (screenCaptureCallback != null) return
-        val activity = reactContext.currentActivity ?: return
+    private fun reRegisterScreenCaptureCallback(activity: Activity) {
+        if (Build.VERSION.SDK_INT < 34 || listenerCount == 0) return
+        unregisterScreenCaptureCallback()
+        registerScreenCaptureCallbackOn(activity)
+    }
+
+    @Suppress("NewApi")
+    private fun registerScreenCaptureCallbackOn(activity: Activity?) {
+        if (screenCaptureCallback != null && screenCaptureActivity === activity) return
+        if (activity == null) return
+
+        unregisterScreenCaptureCallback()
 
         try {
             val callback = Activity.ScreenCaptureCallback { emitScreenshotEvent() }
@@ -100,6 +126,7 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
                 callback,
             )
             screenCaptureCallback = callback
+            screenCaptureActivity = activity
         } catch (e: SecurityException) {
             // DETECT_SCREEN_CAPTURE permission missing — degrade gracefully
         }
@@ -108,8 +135,9 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
     @Suppress("NewApi")
     private fun unregisterScreenCaptureCallback() {
         val callback = screenCaptureCallback as? Activity.ScreenCaptureCallback ?: return
-        reactContext.currentActivity?.unregisterScreenCaptureCallback(callback)
+        screenCaptureActivity?.unregisterScreenCaptureCallback(callback)
         screenCaptureCallback = null
+        screenCaptureActivity = null
     }
 
     private fun registerContentObserver() {
@@ -175,6 +203,14 @@ class ScreenSecurityModule(private val reactContext: ReactApplicationContext) :
 
                 val name = if (nameIndex >= 0) cursor.getString(nameIndex)?.lowercase() else null
                 val path = if (pathIndex >= 0) cursor.getString(pathIndex)?.lowercase() else null
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val inScreenshotDir = path?.contains("screenshots") == true
+                    val matchesKeyword = listOfNotNull(name, path).any { value ->
+                        SCREENSHOT_KEYWORDS.any { keyword -> value.contains(keyword) }
+                    }
+                    return@use inScreenshotDir || matchesKeyword
+                }
 
                 val combined = listOfNotNull(name, path)
                 combined.any { value ->

@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform, StyleSheet, View, type ViewProps } from 'react-native';
 
 import SecureViewNativeComponent from './SecureViewNativeComponent';
-import SecureWindowAnchorNative from './SecureWindowAnchorNative';
+import SecureWindowAnchorNative from './SecureWindowAnchorNativeComponent';
 
 export interface SecureViewProps extends ViewProps {
   children?: React.ReactNode;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, type ViewProps } from 'react-native';
 
-import SecureWindowAnchorNative from './SecureWindowAnchorNative';
+import SecureWindowAnchorNative from './SecureWindowAnchorNativeComponent';
 
 const anchorStyles = StyleSheet.create({
   anchor: {
