@@ -4,6 +4,6 @@ import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNati
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface NativeSecureWindowAnchorProps extends ViewProps {}
 
-export default codegenNativeComponent<NativeSecureWindowAnchorProps>(
-  'RTNSecureWindowAnchor',
-) as HostComponent<NativeSecureWindowAnchorProps>;
+export default codegenNativeComponent<NativeSecureWindowAnchorProps>('RTNSecureWindowAnchor', {
+  excludedPlatforms: ['iOS'],
+}) as HostComponent<NativeSecureWindowAnchorProps>;

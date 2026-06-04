@@ -565,6 +565,10 @@ adb shell input keyevent 120
 
 ## Migration
 
+### 1.2.0 → 1.2.1
+
+- **iOS New Architecture:** fixes a launch crash when the library was linked with Fabric enabled (missing `RTNSecureWindowAnchorView`). Upgrade if you saw `RCTThirdPartyComponentsProvider` / `NSClassFromString` failures at startup. No API changes.
+
 ### 1.1.x → 1.2.0
 
 - **Default export removed** — use named imports only, e.g. `import { enableFullProtection } from 'react-native-screen-security'`

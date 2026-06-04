@@ -1,6 +1,6 @@
 {
   "name": "react-native-screen-security",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "workspaces": {
     "packages": [
@@ -88,8 +88,7 @@
     },
     "ios": {
       "componentProvider": {
-        "SecureView": "RTNSecureView",
-        "RTNSecureWindowAnchor": "RTNSecureWindowAnchorView"
+        "SecureView": "RTNSecureView"
       }
     }
   },

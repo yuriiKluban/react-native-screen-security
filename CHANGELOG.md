@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-06-04
+
+### Fixed
+
+- iOS New Architecture launch crash when `RTNSecureWindowAnchor` was registered in Fabric codegen without a native `RTNSecureWindowAnchorView` implementation (Android-only anchor). Removed the bogus iOS `componentProvider` entry and excluded the component from iOS codegen.
+
 ## [1.2.0] - 2026-06-03
 
 ### Added
